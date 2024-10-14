@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { trpc } from '../_trpc/client';
@@ -23,7 +23,10 @@ const Page = () => {
         if (isError && error?.data?.code === 'UNAUTHORIZED') {
             router.push('/sign-in');
         }
-    }, [isSuccess, isError, data, error, origin, router]);
+
+        router.push('/sign-in')
+
+    }, [isSuccess, isError, data]);
 
     return (
         <div className="w-full mt-24 flex justify-center">

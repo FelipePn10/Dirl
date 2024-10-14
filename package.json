@@ -25,6 +25,7 @@
     "lucide-react": "^0.451.0",
     "mongodb": "^6.9.0",
     "next": "14.2.14",
+    "nextjs-redirect": "^6.0.1",
     "react": "^18",
     "react-dom": "^18",
     "react-loading-skeleton": "^3.5.0",
