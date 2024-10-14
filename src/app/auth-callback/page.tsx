@@ -26,7 +26,7 @@ const Page = () => {
 
         router.push('/sign-in')
 
-    }, [isSuccess, isError, data]);
+    }, [isSuccess, isError, data, error, origin, router]);
 
     return (
         <div className="w-full mt-24 flex justify-center">
