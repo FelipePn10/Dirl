@@ -31,8 +31,7 @@ export const appRouter = router({
     }),
 
     getUserFiles: privateProcedure.query(async ({ ctx }) => {
-        const { userId, user } = ctx
-
+        const { userId } = ctx
         return await db.file.findMany({
             where: {
                 userId,
@@ -41,8 +40,25 @@ export const appRouter = router({
     }),
     deleteFile: privateProcedure.input(
         z.object({ id: z.string() })
-    ).mutation(({ ctx }) => {
+    ).mutation(async ({ ctx, input }) => {
         const { userId } = ctx
+
+        const file = await db.file.findFirst({
+            where: {
+                id: input.id,
+                userId,
+            }
+        })
+
+        if (!file) throw new TRPCError({ code: "NOT_FOUND" })
+
+        await db.file.delete({
+            where: {
+                id: input.id
+            }
+        })
+
+        return file
     }),
 });
 
