@@ -7,10 +7,11 @@ import Skeleton from "react-loading-skeleton"
 import Link from "next/link"
 import { format } from "date-fns"
 import { Button } from "./ui/button"
+import { useEffect } from "react"
 
 const Dashboard = () => {
 
-    const { data: files, isLoading } =
+    const { data: files, isLoading, error } =
         trpc.getUserFiles.useQuery()
 
     return (

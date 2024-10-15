@@ -31,13 +31,16 @@ export const appRouter = router({
     }),
 
     getUserFiles: privateProcedure.query(async ({ ctx }) => {
+        console.log(ctx)
         const { userId } = ctx
+
         return await db.file.findMany({
             where: {
                 userId,
             }
         })
     }),
+
     deleteFile: privateProcedure.input(
         z.object({ id: z.string() })
     ).mutation(async ({ ctx, input }) => {

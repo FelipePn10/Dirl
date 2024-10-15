@@ -19,7 +19,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Quill",
+  title: "Dirl",
   description: "Sua plataforma preferida de PDF simplificados!",
 };
 
