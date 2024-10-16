@@ -2,22 +2,49 @@
 
 import { trpc } from "@/app/_trpc/client"
 import UploadButton from "./UploadButton"
-import { Ghost, MessagesSquare, Plus, Trash } from "lucide-react"
+import { Ghost, Loader2, MessagesSquare, Plus, Trash } from "lucide-react"
 import Skeleton from "react-loading-skeleton"
 import Link from "next/link"
 import { format } from "date-fns"
 import { Button } from "./ui/button"
-import { useEffect } from "react"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
 
 const Dashboard = () => {
+
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleOpen = () => setIsOpen(true);
+    const handleClose = () => setIsOpen(false);
+
+    const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<string | null>(
+        null
+    )
+
+    const utils = trpc.useContext()
 
     const { data: files, isLoading, error } =
         trpc.getUserFiles.useQuery()
 
+    const { mutate: deleteFile } =
+        trpc.deleteFile.useMutation({
+            onSuccess: () => {
+                utils.getUserFiles.invalidate()
+            },
+            onMutate({ id }) {
+                setCurrentlyDeletingFile(id)
+            },
+            onSettled() {
+                setCurrentlyDeletingFile(null)
+            },
+        })
+
+
+
     return (
         <main className="mx-auto max-w-7xl md:p-10">
             <div className="mt-8 flex flex-col items-start justify-between gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:gap-0">
-                <h1 className="mb-3 font-bold text-5xl text-gray-900">
+                <h1 className="mb-3 ml-1 font-bold text-5xl text-gray-900">
                     Meus arquivos
                 </h1>
 
@@ -53,15 +80,23 @@ const Dashboard = () => {
                                         <Plus className="h-4 w-4" />
                                         {format(
                                             new Date(file.createdAt),
-                                            "dd MMM yyyy HH:mm"
+                                            "dd MMM yyyy"
                                         )}
                                     </div>
                                     <div className="flex items-cemter gap-2">
-                                        <MessagesSquare className="h-4 w-4" />
-                                        mocked
+                                        <Button onClick={handleOpen}>
+                                            <MessagesSquare className="h-4 w-4 " />
+                                            <span className="p-1">Anotações</span>
+                                        </Button>
                                     </div>
-                                    <Button size='sm' className="w-full" variant='destructive'>
-                                        <Trash className="h-4 w-4" />
+                                    <Button
+                                        onClick={() => deleteFile({ id: file.id })}
+                                        size='sm'
+                                        //className="w-full bg-red-600 hover:bg-red-700"
+                                        variant='destructive'>
+                                        {currentlyDeletingFile === file.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : <Trash className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </li>
@@ -76,7 +111,32 @@ const Dashboard = () => {
                     <p>Vamos enviar seu primeiro PDF</p>
                 </div>
             )}
-        </main>
+
+
+            {/* Modal de anotações */}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent>
+                    <DialogHeader className="h-96">
+                        <DialogTitle>Suas Anotações</DialogTitle>
+                        <DialogDescription>
+                            Escreva suas anotações sobre seu arquivo aqui..
+                        </DialogDescription>
+                    </DialogHeader>
+                    {/* Conteúdo do modal */}
+                    <textarea
+                        placeholder="Digite suas anotações..."
+                        className="w-full h-36 p-2 border rounded-md"
+                    />
+                    {/* Botão para fechar o modal */}
+                    <Button onClick={handleClose}>
+                        Enviar
+                    </Button>
+                    <Button onClick={handleClose}>
+                        Fechar
+                    </Button>
+                </DialogContent>
+            </Dialog>
+        </main >
     )
 }
 
