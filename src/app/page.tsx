@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import Image from "next/image";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -128,6 +129,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </>
   );
 }

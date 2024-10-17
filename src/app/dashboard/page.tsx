@@ -9,7 +9,6 @@ const Page = async () => {
         const user = await getUser()
 
         if (!user || !user.id) {
-            console.log("User not authenticated, redirecting to auth-callback")
             redirect('/auth-callback?origin=dashboard')
         }
 
@@ -20,13 +19,11 @@ const Page = async () => {
         })
 
         if (!dbUser) {
-            console.log("User not found in database, creating new user")
             redirect('/auth-callback?origin=dashboard')
         }
 
         return <Dashboard />
     } catch (error) {
-        console.error('Error in dashboard page:', error)
         redirect('/error')
     }
 }
