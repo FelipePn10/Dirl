@@ -10,7 +10,7 @@ export default function Home() {
       <MaxWidthWrapper className="mb-12 mt-28 sm:mt-40 flex flex-col items-center justify-center text-center">
         <div className="mx-auto mb-4 flex max-w-fit items-center justify-center space-x-2 overflow-hidden rounded-full border border-gray-200 bg-white px-7 py-2 shadow-md backdrop-blur transition-all hover:border-gray-300 hover:bg-white/50">
           <p className="text-sm font-semibold text-gray-700">
-            Dirl agora é público!
+            LuaPDF agora é público!
           </p>
         </div>
         <h1 className="max-w-4xl text-5xl font-bold md:text-6xl lg:text-6.999xl">
@@ -18,7 +18,7 @@ export default function Home() {
           <span className="text-blue-600">documentos</span> em segundos.
         </h1>
         <p className="mt-8 max-w-prose text-zinc-700 sm:text-lg">
-          O Dirl permite que você converse com qualquer documento PDF. Basta fazer o upload do seu arquivo e começar a fazer perguntas imediatamente.
+          Permitindo que você converse com qualquer documento PDF. Basta fazer o upload do seu arquivo e começar a fazer perguntas imediatamente.
         </p>
         <Link className={buttonVariants({
           size: 'lg',
@@ -71,7 +71,7 @@ export default function Home() {
               Comece a conversar em minutos
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Conversar com seus arquivos PDF nunca foi tão fácil quanto com o Quill.
+              Conversar com seus arquivos PDF nunca foi tão fácil quanto com a nossa plataforma.
             </p>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function Home() {
               <span className="text-sm font-medium text-blue-600">Passo 3</span>
               <span className="text-xl font-semibold">Comece a fazer perguntas</span>
               <span className="mt-2 text-zinc-700">
-                É simples assim. Experimente o Quill hoje mesmo -
+                É simples assim. Experimente LuaPDF hoje mesmo -
                 realmente leva menos de um minuto.
               </span>
             </div>

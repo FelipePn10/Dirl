@@ -13,7 +13,7 @@ const Navbar = () => {
                         href='/'
                         className="flex z-40 font-semibold"
                     >
-                        <span>dirl.</span>
+                        <span>luapdf.</span>
                     </Link>
 
                     {/* todo: add mobile navbar */}

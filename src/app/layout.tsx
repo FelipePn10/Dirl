@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
 
 import "react-loading-skeleton/dist/skeleton.css"
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,7 +20,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Dirl",
+  title: "Lua",
   description: "Sua plataforma preferida de PDF simplificados!",
 };
 
@@ -35,6 +36,7 @@ export default function RootLayout({
           className={cn(
             'min-h-screen font-sans antialiased grainy'
           )}>
+          <Toaster />
           <Navbar />
           {children}
         </body>
