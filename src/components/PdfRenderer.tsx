@@ -1,7 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronUp, Loader2, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, RotateCw, Search } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf"
 
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
@@ -25,6 +25,7 @@ import {
 } from "./ui/dropdown-menu";
 
 import SimpleBar from "simplebar-react"
+import PdfFullscreen from "./PdfFullscreen";
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -44,6 +45,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     const [numPages, setNumPages] = useState<number>()
     const [currPage, setCurrPage] = useState<number>(1)
     const [scale, setScale] = useState<number>(1)
+    const [rotation, setRotation] = useState<number>(0)
 
     const CustomPageValidator = z.object({
         page: z.string().refine((num) => Number(num) > 0 && Number(num) <= numPages!)
@@ -79,8 +81,10 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                     <Button
                         disabled={currPage <= 1}
                         onClick={() => {
-                            setCurrPage((prev) => (prev - 1 > 1 ? prev - 1 : 1)
+                            setCurrPage((prev) =>
+                                (prev - 1 > 1 ? prev - 1 : 1)
                             )
+                            setValue("page", String(currPage - 1))
                         }}
                         variant="ghost"
                         aria-label="previous page">
@@ -106,7 +110,9 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                     <Button
                         disabled={numPages === undefined || currPage === numPages}
                         onClick={() => {
-                            setCurrPage((prev) => prev + 1 > numPages! ? numPages! : prev + 1)
+                            setCurrPage((prev) =>
+                                prev + 1 > numPages! ? numPages! : prev + 1)
+                            setValue("page", String(currPage + 1))
                         }}
                         variant="ghost"
                         aria-label="next page">
@@ -146,6 +152,15 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <Button
+                        onClick={() => setRotation((prev) => prev + 90)}
+                        variant="ghost"
+                        aria-label="rotate 90 degrees">
+                        <RotateCw className="h-4 w-4" />
+                    </Button>
+
+                    <PdfFullscreen fileUrl={url} />
                 </div>
             </div>
 
@@ -171,6 +186,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                                 width={width ? width : 1}
                                 pageNumber={currPage}
                                 scale={scale}
+                                rotate={rotation}
                             />
                         </Document>
                     </div>
