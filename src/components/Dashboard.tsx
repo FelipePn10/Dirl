@@ -117,14 +117,14 @@ const Dashboard = () => {
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader className="h-96">
-                        <DialogTitle>Suas Anotações</DialogTitle>
+                        <DialogTitle>EM CONSTRUÇÃO</DialogTitle>
                         <DialogDescription>
-                            Escreva suas anotações sobre seu arquivo aqui..
+                            ESTA PARTE ESTÁ EM CONSTRUÇÃO. AGRADECEMOS SUA COMPREENSÃO!
                         </DialogDescription>
                     </DialogHeader>
                     {/* Conteúdo do modal */}
                     <textarea
-                        placeholder="Digite suas anotações..."
+                        placeholder="FORA DO AR... ERROR"
                         className="w-full h-36 p-2 border rounded-md"
                     />
                     {/* Botão para fechar o modal */}
