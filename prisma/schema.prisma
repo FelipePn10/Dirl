@@ -16,6 +16,7 @@ model User {
   stripePriceId          String?   @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
   File                   File[]
+  Message                Message[]
 }
 
 model File {
@@ -24,10 +25,25 @@ model File {
   uploadStatus UploadStatus @default(PENDING)
   url          String
   key          String
+  messages     Message[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   userId       String?
   User         User?        @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id   String @id @default(cuid())
+  text String @db.Text()
+
+  isUserMessage Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  File      File?    @relation(fields: [fileId], references: [id])
+  fileId    String?
 }
 
 enum UploadStatus {

@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
+import CreateDocument from "./CreateDocument"
 
 const Dashboard = () => {
 
@@ -48,6 +49,7 @@ const Dashboard = () => {
                     Meus arquivos
                 </h1>
 
+                {/*<CreateDocument />*/}
                 <UploadButton />
             </div>
 
