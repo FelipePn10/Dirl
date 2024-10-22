@@ -23,7 +23,7 @@ const ChatInput = ({ isDisabled }: ChatInputProps) => {
                                 className="resize-none pr-12 text-base py-3 scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
                             />
 
-                            <Button className="absolute bootom-1.5 right-[8px]" aria-label="enviar mensagem">
+                            <Button className="absolute bootom-1.5 -mt-[45px] right-[8px]" aria-label="enviar mensagem">
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>

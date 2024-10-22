@@ -45,17 +45,16 @@ export const ourFileRouter = {
 
                 //vectorize and index entire document
 
-                const pinecone = await getPineconeClient()
-                const pineconeIndex = pinecone.Index('luapdf')
+                const pineconeIndex = getPineconeClient.Index('luapdf')
 
-                const embeddings = new CohereEmbeddings({
+                {/*const embeddings = new CohereEmbeddings({
                     apiKey: process.env.COHERE_API_KEY
-                })
+                }) */}
 
-                await PineconeStore.fromDocuments(pageLevelDocs, embeddings, {
+                {/*await PineconeStore.fromDocuments(pageLevelDocs, embeddings, {
                     pineconeIndex,
                     namespace: createdFile.id,
-                })
+                })*/}
 
                 await db.file.update({
                     data: {
@@ -66,6 +65,11 @@ export const ourFileRouter = {
                     }
                 })
             } catch (err) {
+
+
+                console.error("Error processing PDF", err)
+
+
                 await db.file.update({
                     data: {
                         uploadStatus: "FAILED"

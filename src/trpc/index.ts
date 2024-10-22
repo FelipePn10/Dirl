@@ -53,6 +53,8 @@ export const appRouter = router({
 
             if (!file) return { status: "PEDING" as const }
 
+            console.log(file)
+
             return { status: file.uploadStatus }
         }),
 

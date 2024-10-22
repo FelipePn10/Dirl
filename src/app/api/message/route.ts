@@ -34,4 +34,6 @@ export const POST = async (req: NextRequest) => {
             fileId,
         },
     })
+
+    // 1: vectorize message
 };
