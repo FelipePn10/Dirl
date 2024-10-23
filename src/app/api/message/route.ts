@@ -40,6 +40,7 @@ export const POST = async (req: NextRequest) => {
 
     // 1: Vetoriza a mensagem com Cohere
     const embeddings = new CohereEmbeddings({
+        model: "embed-english-light-v2.0",
         apiKey: process.env.COHERE_API_KEY!,
     });
 
@@ -71,41 +72,49 @@ export const POST = async (req: NextRequest) => {
         token: process.env.COHERE_API_KEY,
     });
 
-    type StreamChunk = any;
-
-    const response = await cohere.chat({
-        model: 'c4ai-aya-23-8b',
-        messages: [
-            {
-                role: 'system',
-                content:
-                    'Use the following pieces of context (or previous conversation if needed) to answer the users question in markdown format.',
-            },
-            {
-                role: 'user',
-                content: `Use the following pieces of context (or previous conversation if needed) to answer the user's question in markdown format. If you don't know the answer, just say that you don't know, don't try to make up an answer.
-    
+    const response = await fetch('https://api.cohere.ai/v2/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.COHERE_API_KEY}`,
+        },
+        body: JSON.stringify({
+            model: "embed-english-light-v2.0",
+            temperature: 0.2,
+            max_tokens: 300,
+            stream: true,
+            messages: [
+                {
+                    role: 'system',
+                    content:
+                        'Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format.',
+                },
+                {
+                    role: 'user',
+                    content: `Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
+                    
               \n----------------\n
               
               PREVIOUS CONVERSATION:
               ${formattedPrevMessages.map((message) => {
-                    if (message.role === 'user') return `User: ${message.content}\n`;
-                    return `Assistant: ${message.content}\n`;
-                })}
-    
+                        if (message.role === 'user') return `User: ${message.content}\n`
+                        return `Assistant: ${message.content}\n`
+                    })}
+              
               \n----------------\n
-    
+              
               CONTEXT:
               ${results.map((r) => r.pageContent).join('\n\n')}
-    
+              
               USER INPUT: ${message}`,
-            },
-        ],
+                },
+            ],
+        }),
     });
 
-    //check and if necessary change later!:
+    console.log(response)
 
-    const stream = CohereStream(response as unknown as AsyncIterable<StreamChunk>, {
+    const stream = CohereStream(response, {
         async onCompletion(completion) {
             await db.message.create({
                 data: {
@@ -118,8 +127,10 @@ export const POST = async (req: NextRequest) => {
         },
     });
 
+
     return new StreamingTextResponse(stream);
 }
+
 
 
 

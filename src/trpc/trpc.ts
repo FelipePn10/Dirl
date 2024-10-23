@@ -8,7 +8,6 @@ const isAuth = middleware(async (opts) => {
 
     const { getUser } = getKindeServerSession()
     const user = await getUser()
-    console.log(user)
 
     if (!user || !user.id) {
         throw new TRPCError({ code: 'UNAUTHORIZED' })

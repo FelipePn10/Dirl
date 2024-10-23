@@ -31,7 +31,6 @@ export const appRouter = router({
     }),
 
     getUserFiles: privateProcedure.query(async ({ ctx }) => {
-        console.log(ctx)
         const { userId } = ctx
 
         return await db.file.findMany({
@@ -52,8 +51,6 @@ export const appRouter = router({
             })
 
             if (!file) return { status: "PEDING" as const }
-
-            console.log(file)
 
             return { status: file.uploadStatus }
         }),
