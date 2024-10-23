@@ -66,10 +66,6 @@ export const ourFileRouter = {
                 })
             } catch (err) {
 
-
-                console.error("Error processing PDF", err)
-
-
                 await db.file.update({
                     data: {
                         uploadStatus: "FAILED"
