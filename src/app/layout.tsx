@@ -9,6 +9,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import "simplebar-react/dist/simplebar.min.css";
 
 import { Toaster } from "@/components/ui/toaster";
+import Support from "./support/page";
 
 
 const geistSans = localFont({

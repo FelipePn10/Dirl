@@ -2,7 +2,7 @@
 
 import { trpc } from "@/app/_trpc/client"
 import ChatInput from "./ChatInput"
-import Messages from "./Messages"
+import Message from "./Message"
 import { Loader2, XCircle } from "lucide-react"
 import { ChatContextProvider } from "./ChatContext"
 
@@ -79,7 +79,7 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
         <ChatContextProvider fileId={fileId}>
             <div className="relative min-h-full bg-zinc-50 flex divide-y divide-zinc-200 flex-col justify-between gap-2">
                 <div className="flex-1 justify-between flex flex-col mb-28">
-                    {/*<Messages />*/}
+                    <Messages fileId={fileId} />
                 </div>
 
                 <ChatInput />

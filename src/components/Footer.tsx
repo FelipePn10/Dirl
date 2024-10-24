@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {['Conheça nossa história', 'Contato & Suporte', 'Termos de Privacidade'].map((item, index) => (
                                 <li key={index}>
-                                    <a href="#" className="hover:text-blue-200 transition-colors duration-300">{item}</a>
+                                    <a href="pdfly\src\pages\ContactAndSupport\page.tsx" className="hover:text-blue-200 transition-colors duration-300">{item}</a>
                                 </li>
                             ))}
                         </ul>
