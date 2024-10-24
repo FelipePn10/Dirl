@@ -2,7 +2,7 @@
 
 import { trpc } from "@/app/_trpc/client"
 import ChatInput from "./ChatInput"
-import Message from "./Message"
+import Messages from "./Messages"
 import { Loader2, XCircle } from "lucide-react"
 import { ChatContextProvider } from "./ChatContext"
 
