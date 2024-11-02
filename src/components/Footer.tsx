@@ -1,5 +1,5 @@
 import React from 'react';
-import { Twitter, Instagram, MoonStar, MoonStarIcon, Youtube } from 'lucide-react';
+import { Twitter, Instagram, MoonStarIcon, Youtube } from 'lucide-react';
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();

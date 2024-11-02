@@ -5,204 +5,106 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { CohereEmbeddings } from "@langchain/cohere";
 import { PineconeStore } from "@langchain/pinecone";
 import { NextRequest } from "next/server";
-import { CohereClientV2 } from "cohere-ai";
-
-import { CohereStream, StreamingTextResponse } from "ai"
+import { CohereClient } from "cohere-ai";
+import { NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest) => {
-    const body = await req.json();
+    try {
+        const body = await req.json();
 
-    const { getUser } = getKindeServerSession();
-    const user = await getUser();
-    const { id: userId } = user;
+        const { getUser } = getKindeServerSession();
+        const user = await getUser();
+        const { id: userId } = user;
 
-    if (!userId) return new Response("Unauthorized", { status: 401 });
+        if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { fileId, message } = SendMessageValidator.parse(body);
+        const { fileId, message } = SendMessageValidator.parse(body);
 
-    const file = await db.file.findFirst({
-        where: {
-            id: fileId,
-            userId,
-        },
-    });
-
-    if (!file) return new Response("Not Found", { status: 404 });
-
-    await db.message.create({
-        data: {
-            text: message,
-            isUserMessage: true,
-            userId,
-            fileId,
-        },
-    });
-
-    // 1: Vetoriza a mensagem com Cohere
-    const embeddings = new CohereEmbeddings({
-        model: "embed-english-light-v2.0",
-        apiKey: process.env.COHERE_API_KEY!,
-    });
-
-    const pineconeIndex = getPineconeClient.Index('luapdf')
-
-    const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-        pineconeIndex,
-        namespace: file.id,
-    });
-
-    const results = await vectorStore.similaritySearch(message, 4);
-
-    const prevMessages = await db.message.findMany({
-        where: {
-            fileId,
-        },
-        orderBy: {
-            createdAt: 'asc',
-        },
-        take: 6,
-    });
-
-    const formattedPrevMessages = prevMessages.map((msg) => ({
-        role: msg.isUserMessage ? ("user" as const) : ("assistant" as const),
-        content: msg.text,
-    }));
-
-    const cohere = new CohereClientV2({
-        token: process.env.COHERE_API_KEY,
-    });
-
-    const response = await cohere.chat({
-        model: "c4ai-aya-23-8b",
-        temperature: 0,
-        messages: [
-            {
-                role: 'system',
-                content:
-                    'Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format.',
+        const file = await db.file.findFirst({
+            where: {
+                id: fileId,
+                userId,
             },
-            {
-                role: 'user',
-                content: `Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
+        });
+
+        if (!file) return new NextResponse("Not Found", { status: 404 });
+
+        await db.message.create({
+            data: {
+                text: message,
+                isUserMessage: true,
+                userId,
+                fileId,
+            },
+        });
+
+        const embeddings = new CohereEmbeddings({
+            model: "embed-english-light-v2.0", //use another AI in the future
+            apiKey: process.env.COHERE_API_KEY!,
+        });
+
+        const pineconeIndex = getPineconeClient.Index('luapdf')
+
+        const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+            pineconeIndex,
+            namespace: file.id,
+        });
+
+        const results = await vectorStore.similaritySearch(message, 4);
+
+        const prevMessages = await db.message.findMany({
+            where: {
+                fileId,
+            },
+            orderBy: {
+                createdAt: 'asc',
+            },
+            take: 6,
+        });
+
+        const formattedPrevMessages = prevMessages.map((msg) => ({
+            role: msg.isUserMessage ? "user" : "assistant",
+            content: msg.text,
+        }));
+
+        const cohere = new CohereClient({
+            token: process.env.COHERE_API_KEY,
+        });
+
+        const response = await cohere.generate({
+            model: "command",
+            prompt: `Use the following pieces of context (or previous conversation if needed) to answer the users question in markdown format.
+            If you don't know the answer, just say that you don't know, don't try to make up an answer.
             
-      \n----------------\n
-      
-      PREVIOUS CONVERSATION:
-      ${formattedPrevMessages.map((message) => {
-                    if (message.role === 'user') return `User: ${message.content}\n`
-                    return `Assistant: ${message.content}\n`
-                })}
-      
-      \n----------------\n
-      
-      CONTEXT:
-      ${results.map((r) => r.pageContent).join('\n\n')}
-      
-      USER INPUT: ${message}`,
+            Previous conversation:
+            ${formattedPrevMessages.map((message) => {
+                if (message.role === 'user') return `User: ${message.content}\n`
+                return `Assistant: ${message.content}\n`
+            })}
+            
+            Context:
+            ${results.map((r) => r.pageContent).join('\n\n')}
+            
+            User input: ${message}`,
+            maxTokens: 500,
+            temperature: 0,
+        });
+
+        const generatedText = response.generations[0].text;
+
+        await db.message.create({
+            data: {
+                text: generatedText,
+                isUserMessage: false,
+                userId,
+                fileId,
             },
-        ],
-    })
+        });
 
-    console.log(response)
+        return NextResponse.json({ response: generatedText });
 
-    const stream = CohereStream(response, {
-        async onCompletion(completion) {
-            await db.message.create({
-                data: {
-                    text: completion,
-                    isUserMessage: false,
-                    userId,
-                    fileId,
-                },
-            });
-        },
-    });
-
-
-    return new StreamingTextResponse(stream);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const response = await fetch('https://api.cohere.ai/v2/generate', {
-//     method: 'POST',
-//     headers: {
-//         'Content-Type': 'application/json',
-//         Authorization: `Bearer ${process.env.COHERE_API_KEY}`,
-//     },
-//     body: JSON.stringify({
-//         model: "embed-english-light-v2.0",
-//         temperature: 0.2,
-//         max_tokens: 300,
-//         stream: true,
-//         messages: [
-//             {
-//                 role: 'system',
-//                 content:
-//                     'Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format.',
-//             },
-//             {
-//                 role: 'user',
-//                 content: `Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
-
-//           \n----------------\n
-
-//           PREVIOUS CONVERSATION:
-//           ${formattedPrevMessages.map((message) => {
-//                     if (message.role === 'user') return `User: ${message.content}\n`
-//                     return `Assistant: ${message.content}\n`
-//                 })}
-
-//           \n----------------\n
-
-//           CONTEXT:
-//           ${results.map((r) => r.pageContent).join('\n\n')}
-
-//           USER INPUT: ${message}`,
-//             },
-//         ],
-//     }),
-// });
+    } catch (error) {
+        console.error("Error in POST handler:", error);
+        return new NextResponse("Internal Server Error", { status: 500 });
+    }
+};
