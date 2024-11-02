@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { createContext, ReactNode, useState, useContext } from "react";
+import { createContext, ReactNode, useState, useContext, useRef } from "react";
 import { ExtendedMessage } from "@/types/message";
+import { trpc } from "@/app/_trpc/client";
+import { INFINITE_QUERY_LIMIT } from "@/config/infinite-query";
 
 type StreamResponse = {
     addMessage: () => void,
@@ -28,9 +30,15 @@ interface Props {
 export const ChatContextProvider = ({ fileId, children }: Props) => {
     const [message, setMessage] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const utils = trpc.useContext();
+
+
     const [messages, setMessages] = useState<ExtendedMessage[]>([]);
 
     const { toast } = useToast();
+
+    const backupMessage = useRef('')
 
     const { mutate: sendMessage } = useMutation({
         mutationFn: async ({ message }: { message: string }) => {
@@ -44,9 +52,9 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
             });
 
             if (!response.ok) {
-                toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+                toast({ title: "Erro", description: "Falha ao enviar mensagem!", variant: "destructive" });
                 setIsLoading(false);
-                throw new Error('Failed to send message');
+                throw new Error('Falha ao enviar mensagem!');
             }
 
             // Processing the response stream to add the AI ​​message
@@ -66,6 +74,61 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
             }
             setIsLoading(false);
         },
+
+        onMutate: async ({ message }) => {
+            backupMessage.current = message
+            setMessage('');
+
+            await utils.getPageFileMessages.cancel()
+
+            const previousMessages = utils.getPageFileMessages.getInfiniteData()
+
+            utils.getPageFileMessages.setInfiniteData(
+                { fileId, limit: INFINITE_QUERY_LIMIT },
+                (old) => {
+                    if (!old) {
+                        return {
+                            pages: [],
+                            pageParams: []
+                        }
+                    }
+
+                    const newPages = [...old.pages]
+                    const latestPage = newPages[0]!
+                    latestPage.messages = [
+                        {
+                            createdAt: new Date().toISOString(),
+                            id: crypto.randomUUID(),
+                            text: message,
+                            isUserMessage: true,
+                        },
+                        ...latestPage.messages
+                    ]
+                    newPages[0] = latestPage
+                    return {
+                        ...old,
+                        pages: newPages,
+                    }
+                }
+            )
+
+            setIsLoading(true)
+            return {
+                previousMessages: previousMessages?.pages.flatMap((page) => page.messages) ?? []
+            }
+        },
+        onError: (_, __, context) => {
+            setMessage(backupMessage.current)
+            utils.getPageFileMessages.setData(
+                { fileId },
+                { messages: context?.previousMessages ?? [] }
+            )
+        },
+        onSettled: async () => {
+            setIsLoading(false);
+
+            await utils.getPageFileMessages.invalidate({ fileId })
+        }
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

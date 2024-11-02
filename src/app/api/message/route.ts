@@ -39,7 +39,7 @@ export const POST = async (req: NextRequest) => {
         });
 
         const embeddings = new CohereEmbeddings({
-            model: "embed-english-light-v2.0", //use another AI in the future
+            model: "embed-multilingual-light-v3.0",
             apiKey: process.env.COHERE_API_KEY!,
         });
 
