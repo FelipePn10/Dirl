@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createContext, ReactNode, useState, useContext, useRef } from "react";
 import { ExtendedMessage } from "@/types/message";
 import { trpc } from "@/app/_trpc/client";

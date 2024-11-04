@@ -1,21 +1,35 @@
+/* eslint-disable react/display-name */
 import { cn } from "@/lib/utils"
 import { ExtendedMessage } from "@/types/message"
 import { Icons } from "../Icons"
 import ReactMarkdown from "react-markdown"
 import { format } from "date-fns"
-import { forwardRef } from "react"
+import { forwardRef, useEffect, useState } from "react"
 
 interface MessageProps {
     message: ExtendedMessage
     isNextMessageSamePerson: boolean
 }
 
-// eslint-disable-next-line react/display-name
 const Message = forwardRef<HTMLDivElement, MessageProps>(
     ({
         message,
         isNextMessageSamePerson
     }, ref) => {
+        const [displayText, setDisplayText] = useState('')
+
+        useEffect(() => {
+            // Se for uma mensagem da AI com ID "ai-response", vamos mostrar a animação
+            if (!message.isUserMessage && message.id === "ai-response" && typeof message.text === "string") {
+                setDisplayText(message.text)
+            } else {
+                // Para outras mensagens, mostra o texto completo imediatamente
+                setDisplayText(typeof message.text === "string" ? message.text : "")
+            }
+        }, [message.text, message.isUserMessage, message.id])
+
+        const isStreaming = !message.isUserMessage && message.id === "ai-response"
+
         return (
             <div
                 ref={ref}
@@ -44,16 +58,22 @@ const Message = forwardRef<HTMLDivElement, MessageProps>(
                         "rounded-br-none": !isNextMessageSamePerson && message.isUserMessage,
                         "rounded-bl-none": isNextMessageSamePerson && !message.isUserMessage,
                     })}>
-                        {typeof message.text === "string" ? (
-                            <ReactMarkdown className={cn("prose", {
-                                "text-zinc-50": message.isUserMessage
-                            })}>
-                                {message.text}
-                            </ReactMarkdown>
+                        {typeof displayText === "string" ? (
+                            <>
+                                <ReactMarkdown className={cn("prose", {
+                                    "text-zinc-50": message.isUserMessage
+                                })}>
+                                    {displayText}
+                                </ReactMarkdown>
+                                {isStreaming && (
+                                    <span className="inline-flex ml-1 animate-pulse">▋</span>
+                                )}
+                            </>
                         ) : (
                             message.text
                         )}
-                        {message.id !== "loading-message" ? (
+
+                        {message.id !== "loading-message" && !isStreaming ? (
                             <div className={cn("text-xs select-none mt-2 w-full text-right",
                                 {
                                     "text-zinc-500": !message.isUserMessage,
