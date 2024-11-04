@@ -17,6 +17,7 @@
     "@langchain/community": "^0.3.7",
     "@langchain/core": "^0.3.13",
     "@langchain/pinecone": "^0.1.1",
+    "@mantine/hooks": "^7.13.4",
     "@pinecone-database/pinecone": "^3.0.3",
     "@prisma/client": "^5.20.0",
     "@radix-ui/react-dialog": "^1.1.2",

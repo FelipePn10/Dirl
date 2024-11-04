@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createContext, ReactNode, useState, useContext, useRef } from "react";
 import { ExtendedMessage } from "@/types/message";
 import { trpc } from "@/app/_trpc/client";
@@ -30,19 +30,13 @@ interface Props {
 export const ChatContextProvider = ({ fileId, children }: Props) => {
     const [message, setMessage] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
     const utils = trpc.useContext();
-
-
     const [messages, setMessages] = useState<ExtendedMessage[]>([]);
-
     const { toast } = useToast();
-
     const backupMessage = useRef('')
 
     const { mutate: sendMessage } = useMutation({
         mutationFn: async ({ message }: { message: string }) => {
-            setIsLoading(true);
             const response = await fetch('/api/message', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -53,26 +47,15 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
 
             if (!response.ok) {
                 toast({ title: "Erro", description: "Falha ao enviar mensagem!", variant: "destructive" });
-                setIsLoading(false);
                 throw new Error('Falha ao enviar mensagem!');
             }
 
-            // Processing the response stream to add the AI ​​message
-            const reader = response.body?.getReader();
-            if (reader) {
-                let aiResponseText = '';
-                const decoder = new TextDecoder();
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    aiResponseText += decoder.decode(value);
-                    setMessages((prev) => [
-                        ...prev,
-                        { id: "ai-response", text: aiResponseText, isUserMessage: false, createdAt: new Date().toISOString() }, // Convertendo `createdAt` para string
-                    ]);
-                }
+            const data = response.body;
+            if (!data) {
+                throw new Error('Resposta vazia do servidor');
             }
-            setIsLoading(false);
+
+            return data as ReadableStream<Uint8Array>;
         },
 
         onMutate: async ({ message }) => {
@@ -117,6 +100,97 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
                 previousMessages: previousMessages?.pages.flatMap((page) => page.messages) ?? []
             }
         },
+
+        onSuccess: async (stream) => {
+            setIsLoading(false)
+
+            if (!stream) {
+                return toast({
+                    title: "Erro",
+                    description: "Falha ao carregar as mensagens!",
+                    variant: "destructive",
+                })
+            }
+
+            const reader = stream.getReader()
+            const decoder = new TextDecoder()
+            let done = false
+            let accResponse = ''
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read()
+                done = doneReading
+
+                if (value) {
+                    const chunkValue = decoder.decode(value)
+                    // Tentar extrair o texto da resposta do JSON, se possível
+                    try {
+                        const jsonResponse = JSON.parse(chunkValue);
+                        if (jsonResponse.response) {
+                            // Limpar formatação indesejada e normalizar quebras de linha
+                            accResponse = jsonResponse.response
+                                .replace(/\\n/g, '\n')
+                                .replace(/\r\n/g, '\n')
+                                .replace(/\\r\\n/g, '\n')
+                                .trim();
+                        }
+                    } catch {
+                        // Se não for JSON válido, apenas acumula o texto normalmente
+                        accResponse += chunkValue
+                            .replace(/\\n/g, '\n')
+                            .replace(/\r\n/g, '\n')
+                            .replace(/\\r\\n/g, '\n')
+                            .trim();
+                    }
+                }
+
+                utils.getPageFileMessages.setInfiniteData(
+                    { fileId, limit: INFINITE_QUERY_LIMIT },
+                    (old) => {
+                        if (!old) return { pages: [], pageParams: [] }
+
+                        const isAiResponseCreated = old.pages.some(
+                            (page) => page.messages.some((message) => message.id === "ai-response")
+                        )
+
+                        const updatedPages = old.pages.map((page) => {
+                            if (page === old.pages[0]) {
+                                let updatedMessages
+
+                                if (!isAiResponseCreated) {
+                                    updatedMessages = [
+                                        {
+                                            createdAt: new Date().toISOString(),
+                                            id: "ai-response",
+                                            text: accResponse,
+                                            isUserMessage: false
+                                        },
+                                        ...page.messages
+                                    ]
+                                } else {
+                                    updatedMessages = page.messages.map((message) => {
+                                        if (message.id === "ai-response") {
+                                            return {
+                                                ...message,
+                                                text: accResponse
+                                            }
+                                        }
+                                        return message
+                                    })
+                                }
+                                return {
+                                    ...page,
+                                    messages: updatedMessages,
+                                }
+                            }
+                            return page
+                        })
+                        return { ...old, pages: updatedPages }
+                    }
+                )
+            }
+        },
+
         onError: (_, __, context) => {
             setMessage(backupMessage.current)
             utils.getPageFileMessages.setData(
@@ -124,9 +198,9 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
                 { messages: context?.previousMessages ?? [] }
             )
         },
+
         onSettled: async () => {
             setIsLoading(false);
-
             await utils.getPageFileMessages.invalidate({ fileId })
         }
     });
@@ -138,14 +212,14 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
     const addMessage = () => {
         if (message.trim()) {
             const userMessage = {
-                id: String(Date.now()), // Gera um ID único para cada mensagem
+                id: String(Date.now()),
                 text: message,
                 isUserMessage: true,
-                createdAt: new Date().toISOString(), // Convertendo `createdAt` para string
+                createdAt: new Date().toISOString(),
             };
-            setMessages((prev) => [...prev, userMessage]); // Adiciona a mensagem do usuário localmente
-            sendMessage({ message }); // Envia a mensagem para a API
-            setMessage(''); // Limpa o campo de mensagem após o envio
+            setMessages((prev) => [...prev, userMessage]);
+            sendMessage({ message });
+            setMessage('');
         }
     };
 
