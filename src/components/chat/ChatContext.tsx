@@ -117,58 +117,65 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
             let done = false
             let accResponse = ''
 
+            // Create an AI message instantly with empty text
+            utils.getPageFileMessages.setInfiniteData(
+                { fileId, limit: INFINITE_QUERY_LIMIT },
+                (old) => {
+                    if (!old) return { pages: [], pageParams: [] }
+
+                    const newPages = old.pages.map((page, i) => {
+                        if (i === 0) {
+                            return {
+                                ...page,
+                                messages: [
+                                    {
+                                        createdAt: new Date().toISOString(),
+                                        id: "ai-response",
+                                        text: "",
+                                        isUserMessage: false
+                                    },
+                                    ...page.messages
+                                ]
+                            }
+                        }
+                        return page
+                    })
+                    return { ...old, pages: newPages }
+                }
+            )
+
             while (!done) {
                 const { value, done: doneReading } = await reader.read()
                 done = doneReading
 
                 if (value) {
                     const chunkValue = decoder.decode(value)
-                    // Tentar extrair o texto da resposta do JSON, se possível
                     try {
-                        const jsonResponse = JSON.parse(chunkValue);
+                        const jsonResponse = JSON.parse(chunkValue)
                         if (jsonResponse.response) {
-                            // Limpar formatação indesejada e normalizar quebras de linha
                             accResponse = jsonResponse.response
                                 .replace(/\\n/g, '\n')
                                 .replace(/\r\n/g, '\n')
                                 .replace(/\\r\\n/g, '\n')
-                                .trim();
+                                .trim()
                         }
                     } catch {
-                        // Se não for JSON válido, apenas acumula o texto normalmente
                         accResponse += chunkValue
                             .replace(/\\n/g, '\n')
                             .replace(/\r\n/g, '\n')
                             .replace(/\\r\\n/g, '\n')
-                            .trim();
+                            .trim()
                     }
-                }
 
-                utils.getPageFileMessages.setInfiniteData(
-                    { fileId, limit: INFINITE_QUERY_LIMIT },
-                    (old) => {
-                        if (!old) return { pages: [], pageParams: [] }
+                    // Update message text as we receive more content
+                    utils.getPageFileMessages.setInfiniteData(
+                        { fileId, limit: INFINITE_QUERY_LIMIT },
+                        (old) => {
+                            if (!old) return { pages: [], pageParams: [] }
 
-                        const isAiResponseCreated = old.pages.some(
-                            (page) => page.messages.some((message) => message.id === "ai-response")
-                        )
-
-                        const updatedPages = old.pages.map((page) => {
-                            if (page === old.pages[0]) {
-                                let updatedMessages
-
-                                if (!isAiResponseCreated) {
-                                    updatedMessages = [
-                                        {
-                                            createdAt: new Date().toISOString(),
-                                            id: "ai-response",
-                                            text: accResponse,
-                                            isUserMessage: false
-                                        },
-                                        ...page.messages
-                                    ]
-                                } else {
-                                    updatedMessages = page.messages.map((message) => {
+                            const updatedPages = old.pages.map((page) => {
+                                if (page === old.pages[0]) {
+                                    const updatedMessages = page.messages.map((message) => {
                                         if (message.id === "ai-response") {
                                             return {
                                                 ...message,
@@ -177,20 +184,19 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
                                         }
                                         return message
                                     })
+                                    return {
+                                        ...page,
+                                        messages: updatedMessages,
+                                    }
                                 }
-                                return {
-                                    ...page,
-                                    messages: updatedMessages,
-                                }
-                            }
-                            return page
-                        })
-                        return { ...old, pages: updatedPages }
-                    }
-                )
+                                return page
+                            })
+                            return { ...old, pages: updatedPages }
+                        }
+                    )
+                }
             }
         },
-
         onError: (_, __, context) => {
             setMessage(backupMessage.current)
             utils.getPageFileMessages.setData(

@@ -17,18 +17,40 @@ const Message = forwardRef<HTMLDivElement, MessageProps>(
         isNextMessageSamePerson
     }, ref) => {
         const [displayText, setDisplayText] = useState('')
+        const [isTyping, setIsTyping] = useState(false)
 
         useEffect(() => {
-            // Se for uma mensagem da AI com ID "ai-response", vamos mostrar a animação
+            // Reset state when message changes
+            setDisplayText('')
+
+            // Only animate AI messages that are not loading states
             if (!message.isUserMessage && message.id === "ai-response" && typeof message.text === "string") {
-                setDisplayText(message.text)
+                setIsTyping(true)
+                let currentText = ''
+                const fullText = message.text
+                let currentIndex = 0
+
+                // Create typing animation
+                const typingInterval = setInterval(() => {
+                    if (currentIndex < fullText.length) {
+                        // Add next character
+                        currentText += fullText[currentIndex]
+                        setDisplayText(currentText)
+                        currentIndex++
+                    } else {
+                        // Animation complete
+                        setIsTyping(false)
+                        clearInterval(typingInterval)
+                    }
+                }, 20) // Adjust speed as needed
+
+                return () => clearInterval(typingInterval)
             } else {
-                // Para outras mensagens, mostra o texto completo imediatamente
+                // For user messages or loading states, show text immediately
                 setDisplayText(typeof message.text === "string" ? message.text : "")
+                setIsTyping(false)
             }
         }, [message.text, message.isUserMessage, message.id])
-
-        const isStreaming = !message.isUserMessage && message.id === "ai-response"
 
         return (
             <div
@@ -65,7 +87,7 @@ const Message = forwardRef<HTMLDivElement, MessageProps>(
                                 })}>
                                     {displayText}
                                 </ReactMarkdown>
-                                {isStreaming && (
+                                {isTyping && (
                                     <span className="inline-flex ml-1 animate-pulse">▋</span>
                                 )}
                             </>
@@ -73,7 +95,7 @@ const Message = forwardRef<HTMLDivElement, MessageProps>(
                             message.text
                         )}
 
-                        {message.id !== "loading-message" && !isStreaming ? (
+                        {message.id !== "loading-message" && !isTyping ? (
                             <div className={cn("text-xs select-none mt-2 w-full text-right",
                                 {
                                     "text-zinc-500": !message.isUserMessage,
