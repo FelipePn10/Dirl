@@ -2,13 +2,25 @@ import { db } from "@/db";
 import { getPineconeClient } from "@/lib/pinecone";
 import { SendMessageValidator } from "@/lib/validators/SendMessageValidator";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { CohereEmbeddings } from "@langchain/cohere";
 import { PineconeStore } from "@langchain/pinecone";
-import { NextRequest } from "next/server";
-import { CohereClient } from "cohere-ai";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const POST = async (req: NextRequest) => {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+async function generateEmbedding(text: string): Promise<number[]> {
+    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const result = await embeddingModel.embedContent(text);
+    return result.embedding.values;
+}
+
+class CustomEmbeddings {
+    async embedQuery(text: string): Promise<number[]> {
+        return generateEmbedding(text);
+    }
+}
+
+export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
@@ -16,7 +28,7 @@ export const POST = async (req: NextRequest) => {
         const user = await getUser();
         const { id: userId } = user;
 
-        if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+        if (!userId) return new NextResponse("Não autorizado", { status: 401 });
 
         const { fileId, message } = SendMessageValidator.parse(body);
 
@@ -27,7 +39,7 @@ export const POST = async (req: NextRequest) => {
             },
         });
 
-        if (!file) return new NextResponse("Not Found", { status: 404 });
+        if (!file) return new NextResponse("Não encontrado", { status: 404 });
 
         await db.message.create({
             data: {
@@ -38,17 +50,15 @@ export const POST = async (req: NextRequest) => {
             },
         });
 
-        const embeddings = new CohereEmbeddings({
-            model: "embed-multilingual-light-v3.0",
-            apiKey: process.env.COHERE_API_KEY!,
-        });
+        const pineconeIndex = getPineconeClient.Index('luapdf');
 
-        const pineconeIndex = getPineconeClient.Index('luapdf')
-
-        const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-            pineconeIndex,
-            namespace: file.id,
-        });
+        const vectorStore = await PineconeStore.fromExistingIndex(
+            new CustomEmbeddings(),
+            {
+                pineconeIndex,
+                namespace: file.id,
+            }
+        );
 
         const results = await vectorStore.similaritySearch(message, 4);
 
@@ -63,34 +73,29 @@ export const POST = async (req: NextRequest) => {
         });
 
         const formattedPrevMessages = prevMessages.map((msg) => ({
-            role: msg.isUserMessage ? "user" : "assistant",
-            content: msg.text,
+            role: msg.isUserMessage ? "user" : "model",
+            parts: [{ text: msg.text }],
         }));
 
-        const cohere = new CohereClient({
-            token: process.env.COHERE_API_KEY,
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-        const response = await cohere.generate({
-            model: "command",
-            prompt: `Use the following pieces of context (or previous conversation if needed) to answer the users question in markdown format.
-            If you don't know the answer, just say that you don't know, don't try to make up an answer.
-            
-            Previous conversation:
-            ${formattedPrevMessages.map((message) => {
-                if (message.role === 'user') return `User: ${message.content}\n`
-                return `Assistant: ${message.content}\n`
-            })}
-            
-            Context:
-            ${results.map((r) => r.pageContent).join('\n\n')}
-            
-            User input: ${message}`,
-            maxTokens: 500,
-            temperature: 0,
-        });
+        const prompt = `Use as seguintes partes do contexto (ou conversa anterior, se necessário) para responder à pergunta do usuário em formato markdown.
+    Se você não souber a resposta, apenas diga que não sabe, não tente inventar uma resposta.
+    
+    Conversa anterior:
+    ${formattedPrevMessages.map((message) => {
+            if (message.role === 'user') return `Usuário: ${message.parts[0].text}\n`;
+            return `Assistente: ${message.parts[0].text}\n`;
+        }).join('')}
+    
+    Contexto:
+    ${results.map((r) => r.pageContent).join('\n\n')}
+    
+    Entrada do usuário: ${message}`;
 
-        const generatedText = response.generations[0].text;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const generatedText = await response.text();
 
         await db.message.create({
             data: {
@@ -104,7 +109,7 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ response: generatedText });
 
     } catch (error) {
-        console.error("Error in POST handler:", error);
-        return new NextResponse("Internal Server Error", { status: 500 });
+        console.error("Erro no manipulador POST:", error);
+        return new NextResponse("Erro Interno do Servidor", { status: 500 });
     }
-};
+}

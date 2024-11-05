@@ -10,7 +10,8 @@ import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
-import CreateDocument from "./CreateDocument"
+import CreateDocument from "./CreatePdfButton"
+import CreatePdfButton from "./CreatePdfButton"
 
 const Dashboard = () => {
 
@@ -49,9 +50,12 @@ const Dashboard = () => {
                 <h1 className="mb-3 ml-1 font-bold text-5xl text-gray-900">
                     Meus arquivos
                 </h1>
+                <div className="flex gap-12 ml-16">
+                    <CreatePdfButton />
+                    {/*<CreateDocument />*/}
+                    <UploadButton />
+                </div>
 
-                {/*<CreateDocument />*/}
-                <UploadButton />
             </div>
 
             {/* display all user files*/}
