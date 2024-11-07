@@ -1,33 +1,28 @@
-// Importações necessárias
 import { privateProcedure, publicProcedure, router } from './trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { pdfRouter } from './router/pdf';
 import { INFINITE_QUERY_LIMIT } from '@/config/infinite-query';
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
-// Configurações dos endpoints principais do appRouter
 export const appRouter = router({
-    authCallback: publicProcedure.query(async () => {
-        const { getUser } = getKindeServerSession();
-        const user = await getUser();
-
-        if (!user.id || !user.email) {
+    authCallback: publicProcedure.query(async ({ ctx }) => {
+        const { session } = ctx;
+        if (!session || !session.user) {
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
         const dbUser = await db.user.findFirst({
             where: {
-                id: user.id,
+                id: session.user.sub,
             },
         });
 
         if (!dbUser) {
             await db.user.create({
                 data: {
-                    id: user.id,
-                    email: user.email,
+                    id: session.user.sub,
+                    email: session.user.email,
                 },
             });
         }
@@ -36,14 +31,18 @@ export const appRouter = router({
     }),
 
     getUserFiles: privateProcedure.query(async ({ ctx }) => {
-        const { userId } = ctx;
+        const { session } = ctx;
+        if (!session || !session.user) {
+            throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
 
         return await db.file.findMany({
             where: {
-                userId,
+                userId: session.user.sub,
             },
         });
     }),
+
 
     getPageFileMessages: privateProcedure
         .input(

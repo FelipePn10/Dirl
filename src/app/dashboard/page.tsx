@@ -1,32 +1,23 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+'use client'
+
+import { useUser } from '@auth0/nextjs-auth0/client'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import Dashboard from '@/components/Dashboard'
-import { db } from '@/db'
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
-import { redirect } from 'next/navigation'
 
-const Page = async () => {
-    try {
-        const { getUser } = getKindeServerSession()
-        const user = await getUser()
+export default function DashboardPage() {
+    const { user, error, isLoading } = useUser()
+    const router = useRouter()
 
-        if (!user || !user.id) {
-            redirect('/auth-callback?origin=dashboard')
+    useEffect(() => {
+        if (!isLoading && !user) {
+            router.push('/api/auth/login')
         }
+    }, [user, isLoading, router])
 
-        const dbUser = await db.user.findFirst({
-            where: {
-                id: user.id,
-            }
-        })
+    if (isLoading) return <div>Carregando...</div>
+    if (error) return <div>Erro: {error.message}</div>
+    if (!user) return null
 
-        if (!dbUser) {
-            redirect('/auth-callback?origin=dashboard')
-        }
-
-        return <Dashboard />
-    } catch (error) {
-        redirect('/error')
-    }
+    return <Dashboard />
 }
-
-export default Page

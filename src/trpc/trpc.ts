@@ -1,28 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { initTRPC, TRPCError } from "@trpc/server";
 
-// Define the context type
-interface Context {
-    userId?: string;
-    user?: any;
-}
+import { getSession } from "@auth0/nextjs-auth0";
+import { initTRPC, TRPCError } from "@trpc/server";
+import { Context, CreateContextFn } from "../types/trpc";
+
+export const createContext: CreateContextFn = async () => {
+    const session = await getSession();
+    return {
+        session: session ?? null,
+        user: session?.user ?? null,
+    };
+};
 
 const t = initTRPC.context<Context>().create();
 const middleware = t.middleware;
 
-const isAuth = middleware(async (opts) => {
-    const { getUser } = getKindeServerSession();
-    const user = await getUser();
-
-    if (!user || !user.id) {
+const isAuth = middleware(async ({ ctx, next }) => {
+    if (!ctx.session || !ctx.user) {
         throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
 
-    return opts.next({
+    return next({
         ctx: {
-            userId: user.id,
-            user,
+            ...ctx,
+            userId: ctx.user.sub,
         },
     });
 });

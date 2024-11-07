@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/db";
 import { getPineconeClient } from "@/lib/pinecone";
 import { SendMessageValidator } from "@/lib/validators/SendMessageValidator";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@auth0/nextjs-auth0";
 import { PineconeStore } from "@langchain/pinecone";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -24,9 +25,10 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
-        const { getUser } = getKindeServerSession();
-        const user = await getUser();
-        const { id: userId } = user;
+        const session = await getSession();
+        const user = session?.user;
+        const userId = (user as any)?.id || user?.sub;
+
 
         if (!userId) return new NextResponse("Não autorizado", { status: 401 });
 

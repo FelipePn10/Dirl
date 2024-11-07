@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/db";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@auth0/nextjs-auth0";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-
 import { CohereEmbeddings } from "@langchain/cohere";
 import { PineconeStore } from "@langchain/pinecone";
 import { getPineconeClient } from "@/lib/pinecone";
@@ -14,13 +13,9 @@ const f = createUploadthing();
 export const ourFileRouter = {
     pdfUploader: f({ pdf: { maxFileSize: "4MB" } })
         .middleware(async ({ req }) => {
-
-            const { getUser } = getKindeServerSession()
-            const user = getUser()
-
-            if (!user || !(await user).id) throw new Error("Não autorizado")
-
-            return { userId: (await user).id };
+            const session = await getSession(req as any, {} as any);
+            if (!session || !session.user || !session.user.sub) throw new Error("Não autorizado");
+            return { userId: session.user.sub };
         })
         .onUploadComplete(async ({ metadata, file }) => {
             const createdFile = await db.file.create({
@@ -34,28 +29,22 @@ export const ourFileRouter = {
             });
 
             try {
-                const response = await fetch(file.url)
+                const response = await fetch(file.url);
+                const blob = await response.blob();
+                const loader = new PDFLoader(blob);
+                const pageLevelDocs = await loader.load();
+                const pagesAmt = pageLevelDocs.length;
 
-                const blob = await response.blob()
-
-                const loader = new PDFLoader(blob)
-
-                const pageLevelDocs = await loader.load()
-
-                const pagesAmt = pageLevelDocs.length
-
-                //vectorize and index entire document
-
-                const pineconeIndex = getPineconeClient.Index('luapdf')
+                const pineconeIndex = getPineconeClient.Index('luapdf');
 
                 const embeddings = new CohereEmbeddings({
                     apiKey: process.env.COHERE_API_KEY
-                })
+                });
 
                 await PineconeStore.fromDocuments(pageLevelDocs, embeddings, {
                     pineconeIndex,
                     namespace: createdFile.id,
-                })
+                });
 
                 await db.file.update({
                     data: {
@@ -64,9 +53,8 @@ export const ourFileRouter = {
                     where: {
                         id: createdFile.id,
                     }
-                })
+                });
             } catch (err) {
-
                 await db.file.update({
                     data: {
                         uploadStatus: "FAILED"
@@ -74,7 +62,7 @@ export const ourFileRouter = {
                     where: {
                         id: createdFile.id,
                     }
-                })
+                });
             }
         }),
 } satisfies FileRouter;

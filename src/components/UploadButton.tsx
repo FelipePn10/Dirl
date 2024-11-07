@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
 import { Button } from "./ui/button"
-
 import Dropzone from "react-dropzone"
 import { Cloud, File, Loader2 } from "lucide-react"
 import { Progress } from "./ui/progress"
@@ -13,14 +13,12 @@ import { trpc } from "@/app/_trpc/client"
 import { useRouter } from "next/navigation"
 
 const UploadDropzone = () => {
-
     const router = useRouter()
-
     const [isUploading, setIsUploading] = useState<boolean>(false)
     const [uploadProgress, setUploadProgress] = useState<number>(0)
     const { toast } = useToast()
-
     const { startUpload } = useUploadThing("pdfUploader")
+    const progressIntervalRef = useRef<number | null>(null)
 
     const { mutate: startPolling } = trpc.getFile.useMutation({
         onSuccess: (file) => {
@@ -33,17 +31,17 @@ const UploadDropzone = () => {
     const startSimulatedProgress = () => {
         setUploadProgress(0)
 
-        const interval = setInterval(() => {
+        progressIntervalRef.current = window.setInterval(() => {
             setUploadProgress((prevProgress) => {
                 if (prevProgress >= 95) {
-                    clearInterval(interval)
+                    clearInterval(progressIntervalRef.current!)
                     return prevProgress
                 }
                 return prevProgress + 5
             })
         }, 500)
 
-        return interval
+        return progressIntervalRef.current
     }
 
     return (
@@ -54,34 +52,35 @@ const UploadDropzone = () => {
 
                 const progressInterval = startSimulatedProgress()
 
-                //handle file uploading
-                const res = await startUpload(acceptedFile)
+                try {
+                    const res = await startUpload(acceptedFile)
 
-                if (!res) {
-                    return toast({
+                    if (!res) {
+                        throw new Error("Falha no upload")
+                    }
+
+                    const [fileResponse] = res
+
+                    const key = fileResponse?.key
+
+                    if (!key) {
+                        throw new Error("Chave de arquivo não encontrada")
+                    }
+
+                    clearInterval(progressInterval)
+                    setUploadProgress(100)
+
+                    startPolling({ key })
+                } catch (error) {
+                    toast({
                         title: "Algo deu errado",
                         description: "Por favor, tente novamente",
                         variant: "destructive"
                     })
+                } finally {
+                    setIsUploading(false)
+                    clearInterval(progressInterval)
                 }
-
-                const [fileResponse] = res
-
-                const key = fileResponse?.key
-
-                if (!key) {
-                    return toast({
-                        title: "Algo deu errado",
-                        description: "Por favor, tente novamente",
-                        variant: "destructive"
-                    })
-                }
-
-                clearInterval(progressInterval)
-                setUploadProgress(100)
-
-                startPolling({ key })
-
             }}>
             {({ getRootProps, getInputProps, acceptedFiles }) => (
                 <div {...getRootProps()}
@@ -165,9 +164,8 @@ const UploadButton = () => {
             <DialogContent>
                 <UploadDropzone />
             </DialogContent>
-        </Dialog >
+        </Dialog>
     )
-
 }
 
 export default UploadButton

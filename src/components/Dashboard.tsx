@@ -10,7 +10,6 @@ import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
-import CreateDocument from "./CreatePdfButton"
 import CreatePdfButton from "./CreatePdfButton"
 
 const Dashboard = () => {
