@@ -12,7 +12,6 @@ const handler = async (req: NextRequest) => {
         createContext: async () => {
             return createContext({
                 req,
-                // Não é necessário passar res para createContext no App Router
             });
         },
     });

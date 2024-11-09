@@ -1,10 +1,14 @@
+'use client'
+
 import Link from "next/link"
+import { useUser } from '@auth0/nextjs-auth0/client'
 import MaxWidthWrapper from "./MaxWidthWrapper"
 import { buttonVariants } from "./ui/button"
-import { LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs/server"
 import { ArrowRight } from "lucide-react"
 
 const Navbar = () => {
+    const { user, isLoading } = useUser()
+
     return (
         <nav className="sticky h-14 inset-x-0 top-0 z-30 w-full border-b border-gray-200 bg-white/75 backdrop-blur-lg transition-all">
             <MaxWidthWrapper>
@@ -24,17 +28,39 @@ const Navbar = () => {
                                 variant: 'ghost',
                                 size: 'sm'
                             })}>Preços</Link>
-                            <LoginLink
-                                className={buttonVariants({
-                                    variant: 'ghost',
-                                    size: 'sm'
-                                })}
-                            >Login</LoginLink>
-                            <RegisterLink
-                                className={buttonVariants({
-                                    size: 'sm'
-                                })}
-                            >Começar <ArrowRight className="ml-1.5 h-5 w-5" /></RegisterLink>
+                            {!isLoading && (
+                                user ? (
+                                    <Link
+                                        href="/api/auth/logout"
+                                        className={buttonVariants({
+                                            variant: 'ghost',
+                                            size: 'sm'
+                                        })}
+                                    >
+                                        Logout
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href="/api/auth/login"
+                                            className={buttonVariants({
+                                                variant: 'ghost',
+                                                size: 'sm'
+                                            })}
+                                        >
+                                            Login
+                                        </Link>
+                                        <Link
+                                            href="/api/auth/login"
+                                            className={buttonVariants({
+                                                size: 'sm'
+                                            })}
+                                        >
+                                            Começar <ArrowRight className="ml-1.5 h-5 w-5" />
+                                        </Link>
+                                    </>
+                                )
+                            )}
                         </>
                     </div>
                 </div>

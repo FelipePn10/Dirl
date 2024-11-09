@@ -18,14 +18,9 @@ const Page = () => {
     useEffect(() => {
         if (isSuccess && data?.success) {
             router.push(origin ? `/${origin}` : '/dashboard');
-        }
-
-        if (isError && error?.data?.code === 'UNAUTHORIZED') {
+        } else if (isError && error?.data?.code === 'UNAUTHORIZED') {
             router.push('/sign-in');
         }
-
-        router.push('/sign-in')
-
     }, [isSuccess, isError, data, error, origin, router]);
 
     return (
