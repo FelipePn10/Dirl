@@ -1,10 +1,12 @@
-import { withMiddlewareAuthRequired } from '@auth0/nextjs-auth0/edge';
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default withMiddlewareAuthRequired();
+export default clerkMiddleware({
+    clockSkewInMs: 300000
+});
 
 export const config = {
     matcher: [
-        '/dashboard/:path*',
-        '/api/restricted/:path*'
-    ]
+        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+        '/(api|trpc)(.*)',
+    ],
 };

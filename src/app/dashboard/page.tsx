@@ -1,23 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Dashboard from '@/components/Dashboard'
 
 export default function DashboardPage() {
-    const { user, error, isLoading } = useUser()
+    const { isLoaded, isSignedIn, user } = useUser()
     const router = useRouter()
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            router.push('/api/auth/login')
+        if (isLoaded && !isSignedIn) {
+            router.push('/sign-in')
         }
-    }, [user, isLoading, router])
+    }, [isLoaded, isSignedIn, router])
 
-    if (isLoading) return <div>Carregando...</div>
-    if (error) return <div>Erro: {error.message}</div>
-    if (!user) return null
+    if (!isLoaded || !isSignedIn) return <div>Carregando...</div>
 
     return <Dashboard />
 }

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { getSession } from "@auth0/nextjs-auth0";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CohereEmbeddings } from "@langchain/cohere";
@@ -13,9 +12,9 @@ const f = createUploadthing();
 export const ourFileRouter = {
     pdfUploader: f({ pdf: { maxFileSize: "4MB" } })
         .middleware(async ({ req }) => {
-            const session = await getSession(req as any, {} as any);
-            if (!session || !session.user || !session.user.sub) throw new Error("Não autorizado");
-            return { userId: session.user.sub };
+            const { userId } = await auth();
+            if (!userId) throw new Error("Não autorizado");
+            return { userId };
         })
         .onUploadComplete(async ({ metadata, file }) => {
             const createdFile = await db.file.create({
@@ -25,6 +24,7 @@ export const ourFileRouter = {
                     userId: metadata.userId,
                     url: file.url,
                     uploadStatus: "PROCESSING",
+                    content: '', // Add this line to satisfy the 'content' requirement
                 },
             });
 

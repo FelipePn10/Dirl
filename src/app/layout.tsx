@@ -10,8 +10,8 @@ import "react-loading-skeleton/dist/skeleton.css";
 import "simplebar-react/dist/simplebar.min.css";
 
 import { Toaster } from "@/components/ui/toaster";
-import Support from "./support/page";
 
+import Support from "./support/page";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -36,16 +36,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="light">
-      <Providers>
-        <body
-          className={cn(
-            'min-h-screen font-sans antialiased grainy'
-          )}>
+      <body
+        className={cn(
+          'min-h-screen font-sans antialiased grainy',
+          geistSans.variable,
+          geistMono.variable
+        )}>
+        <Providers>
           <Toaster />
           <Navbar />
           {children}
-        </body>
-      </Providers>
+        </Providers>
+      </body>
     </html>
   );
 }

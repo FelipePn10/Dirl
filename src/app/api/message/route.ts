@@ -1,11 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { getPineconeClient } from "@/lib/pinecone";
 import { SendMessageValidator } from "@/lib/validators/SendMessageValidator";
-import { getSession } from "@auth0/nextjs-auth0";
 import { PineconeStore } from "@langchain/pinecone";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Define nossa própria interface Embeddings
+interface Embeddings {
+    embedQuery(text: string): Promise<number[]>;
+    embedDocuments(documents: string[]): Promise<number[][]>;
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -15,23 +20,23 @@ async function generateEmbedding(text: string): Promise<number[]> {
     return result.embedding.values;
 }
 
-class CustomEmbeddings {
+class CustomEmbeddings implements Embeddings {
     async embedQuery(text: string): Promise<number[]> {
         return generateEmbedding(text);
+    }
+
+    async embedDocuments(documents: string[]): Promise<number[][]> {
+        return Promise.all(documents.map(generateEmbedding));
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-
-        const session = await getSession();
-        const user = session?.user;
-        const userId = (user as any)?.id || user?.sub;
-
+        const { userId } = await auth();
 
         if (!userId) return new NextResponse("Não autorizado", { status: 401 });
 
+        const body = await req.json();
         const { fileId, message } = SendMessageValidator.parse(body);
 
         const file = await db.file.findFirst({

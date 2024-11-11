@@ -1,7 +1,7 @@
 import ChatWrapper from "@/components/chat/ChatWrapper"
 import PdfRenderer from "@/components/PdfRenderer"
 import { db } from "@/db"
-import { getSession } from "@auth0/nextjs-auth0"
+import { auth } from "@clerk/nextjs/server"
 import { notFound, redirect } from "next/navigation"
 
 interface PageProps {
@@ -20,17 +20,16 @@ const Page = async ({ params }: PageProps) => {
     const { fileid } = params
 
     try {
-        const session = await getSession()
-        const user = session?.user
+        const { userId } = await auth()
 
-        if (!user || !user.id) {
-            redirect(`/auth-callback?origin=dashboard/${fileid}`)
+        if (!userId) {
+            redirect('/sign-in')
         }
 
         const file = await db.file.findFirst({
             where: {
                 id: fileid,
-                userId: user.id // Não precisa mais do await aqui
+                userId
             },
         }) as FileData | null
 
@@ -56,7 +55,6 @@ const Page = async ({ params }: PageProps) => {
             </div>
         )
     } catch (error) {
-        // Tratamento de erro mais robusto
         console.error('Error in dashboard:', error)
         redirect('/error')
     }
