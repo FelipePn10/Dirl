@@ -16,7 +16,7 @@ export default function DashboardPage() {
         }
     }, [isLoaded, isSignedIn, router])
 
-    if (!isLoaded || !isSignedIn) return <div>Carregando...</div>
+    if (!isLoaded || !isSignedIn) return <div className="flex justify-center items-center h-screen">Carregando...</div>
 
     return <Dashboard />
 }

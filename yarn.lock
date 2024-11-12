@@ -1918,16 +1918,6 @@
     zod "^3.22.4"
     zod-to-json-schema "^3.22.4"
 
-"@langchain/cohere@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@langchain/cohere/-/cohere-0.3.1.tgz#3836df2ce69d82201f9f30a263051405c4bcdbc7"
-  integrity sha512-SD+EwKQAOXsqgs1KHCxhXtorQuG9VCXOTkjOlVQnpOwgqNUtn/IZX/S6bIaMflj0E8RBIze0hBMevm2kp1iyUA==
-  dependencies:
-    cohere-ai "^7.14.0"
-    uuid "^10.0.0"
-    zod "^3.23.8"
-    zod-to-json-schema "^3.23.1"
-
 "@langchain/community@^0.3.7":
   version "0.3.11"
   resolved "https://registry.yarnpkg.com/@langchain/community/-/community-0.3.11.tgz#cb0f188f4e72c00beb1efdbd1fc7d7f47b70e636"
@@ -4156,30 +4146,7 @@ code-block-writer@^12.0.0:
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/code-block-writer/-/code-block-writer-12.0.0.tgz#4dd58946eb4234105aff7f0035977b2afdc2a770"
   integrity sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==
-
-cohere-ai@^7.14.0:
-  version "7.14.0"
-  resolved "https://registry.yarnpkg.com/cohere-ai/-/cohere-ai-7.14.0.tgz#37d79057eb48020d101f2686403629874a5b6c81"
-  integrity sha512-hSo2/tFV29whjFFtVtdS7kHmtUsjfMO1sgwE/d5bhOE4O7Vkj5G1R9lLIqkIprp/+rrvCq3HGvEaOgry7xRcDA==
-  dependencies:
-    "@aws-sdk/client-sagemaker" "^3.583.0"
-    "@aws-sdk/credential-providers" "^3.583.0"
-    "@aws-sdk/protocol-http" "^3.374.0"
-    "@aws-sdk/signature-v4" "^3.374.0"
-    form-data "^4.0.0"
-    form-data-encoder "^4.0.2"
-    formdata-node "^6.0.3"
-    js-base64 "3.7.2"
-    node-fetch "2.7.0"
-    qs "6.11.2"
-    readable-stream "^4.5.2"
-    url-join "4.0.1"
-
-cohere@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/cohere/-/cohere-1.1.1.tgz#c61ab08270346ffa96fd662f5f08e0d9876b2b12"
-  integrity sha512-D116FKTuauCShJjPuOAFnkyAPMhV/6f403+yPZwyyFY6gErK1AA41y9rQdBvj8eHDZ9sXVJ6TzmzObVfAFh3ig==
-
+  
 color-convert@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/color-convert/-/color-convert-2.0.1.tgz#72d3a68d598c9bdb3af2ad1e84f21d896abd4de3"

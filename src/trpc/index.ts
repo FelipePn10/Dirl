@@ -7,64 +7,32 @@ import { INFINITE_QUERY_LIMIT } from '@/config/infinite-query';
 
 export const appRouter = router({
     authCallback: publicProcedure.query(async ({ ctx }) => {
-        console.log('Starting authCallback with context:', {
-            hasSession: !!ctx.session,
-            hasUser: !!ctx.user,
-            userDetails: ctx.user ? {
-                sub: ctx.user.sub,
-                email: ctx.user.email
-            } : null
-        });
-
-        const { session } = ctx;
-        if (!session || !session.user) {
-            console.log('No session or user found in authCallback');
+        if (!ctx.userId) {
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
         try {
             const dbUser = await db.user.findFirst({
                 where: {
-                    id: session.user.sub,
+                    id: ctx.userId,
                 },
             });
 
-            console.log('Existing user check:', {
-                searched_id: session.user.sub,
-                userFound: !!dbUser
-            });
-
             if (!dbUser) {
-                console.log('Creating new user with data:', {
-                    id: session.user.sub,
-                    email: session.user.email
+                await db.user.create({
+                    data: {
+                        id: ctx.userId,
+                        email: ctx.session?.user?.email ?? '',
+                    },
                 });
-
-                try {
-                    const newUser = await db.user.create({
-                        data: {
-                            id: session.user.sub,
-                            email: session.user.email,
-                        },
-                    });
-                    console.log('User created successfully:', newUser);
-                } catch (error) {
-                    console.error('Error creating user:', error);
-                    throw new TRPCError({
-                        code: "INTERNAL_SERVER_ERROR",
-                        message: "Failed to create user in database",
-                        cause: error
-                    });
-                }
             }
 
             return { success: true };
         } catch (error) {
-            console.error('Error in authCallback:', error);
+            console.error('Erro no authCallback:', error);
             throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
-                message: "Authentication callback failed",
-                cause: error
+                message: "Falha no callback de autenticação",
             });
         }
     }),

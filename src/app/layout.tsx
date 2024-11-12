@@ -1,17 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
-
 import "react-loading-skeleton/dist/skeleton.css";
 import "simplebar-react/dist/simplebar.min.css";
-
 import { Toaster } from "@/components/ui/toaster";
-
-import Support from "./support/page";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
