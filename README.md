@@ -11,6 +11,7 @@ A aplicação está em fase de construção, e novas funcionalidades estão send
 Como a aplicação ainda está em desenvolvimento, podem ocorrer bugs e instabilidades. Sua contribuição e feedback são muito bem-vindos! Sinta-se à vontade para abrir uma issue ou contribuir com o código.
 
 🔧 Tecnologias Utilizadas
+
 Next.js
 TypeScript
 React
@@ -20,4 +21,4 @@ Kinde
 ShadcnUI
 TailwindCSS
 
-Agradecemos sua compreensão e apoio enquanto trabalhamos para tornar o pdfly uma ferramenta poderosa e útil!
+Agradecemos sua compreensão e apoio enquanto trabalhamos para tornar o LuaPDF uma ferramenta poderosa e útil!
